@@ -5,6 +5,23 @@ public class TicTacToe {
     private int turn;
     private int [][] game;
 
+    private int player;
+
+    public TicTacToe(int startingPlayer) {
+        game = new int[SIDE][SIDE];
+        resetGame();
+        setPlayer(startingPlayer);
+    }
+
+    public int getPlayer() {
+        return player;
+    }
+    public int getTurn(){
+        return turn;
+    }
+    public void setPlayer(int player) {
+        this.player = player;
+    }
     public TicTacToe( ) {
         game = new int[SIDE][SIDE];
         resetGame( );
@@ -84,12 +101,16 @@ public class TicTacToe {
         turn = 1;
     }
 
-    public String result( ) {
-        if( whoWon( ) > 0 )
-            return "Player " + whoWon( ) + " won; game is over";
-        else if( canNotPlay( ) )
+    public String result() {
+        int winningPlayer = whoWon();
+        if (winningPlayer == player) {
+            return "You Won";
+        } else if (winningPlayer > 0) {
+            return "You Lost";
+        } else if (canNotPlay()) {
             return "Tie Game";
-        else
+        } else {
             return "Playing";
+        }
     }
 }

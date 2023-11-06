@@ -9,8 +9,8 @@ import socket.Request;
 import socket.Response;
 
 public class SocketClient {
-    private static final String SERVER_ADDRESS = "your_server_ip_address"; // Replace with the server's IP address
-    private static final int SERVER_PORT = 12345; // Replace with the server's port number
+    private static final String SERVER_ADDRESS = "128.153.171.0"; // Replace with the server's IP address
+    private static final int SERVER_PORT = 5000; // Replace with the server's port number
 
     private Socket socket;
     private ObjectOutputStream out;

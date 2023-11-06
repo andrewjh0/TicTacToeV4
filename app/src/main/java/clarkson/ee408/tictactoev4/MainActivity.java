@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    public void sendMove(int move) {
+    public void sendMove(int move, int col) {
         // Create a Request object with the type SEND_MOVE
         Request request = new Request(Request.RequestType.SEND_MOVE);
 
@@ -71,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
                 GamingResponse response = (GamingResponse) socketClient.receive();
 
                 if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
-                    int move = response.getMove();
                     if (isValidMove(row, col)) {
                         // Update the board with the received move in the mainThread
                         AppExecutors.getInstance().mainThread().execute(new Runnable() {
@@ -88,10 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
     public boolean isValidMove(int row, int col) {
         // Check if the cell is within the bounds of the board
-        if (row >= 0 && row < 3 && col >= 0 && col < 3) {
-            return true;
-        }
-        return false; // The move is invalid if it's outside the bounds or not empty
+        return row >= 0 && row < 3 && col >= 0 && col < 3;// The move is invalid if it's outside the bounds or not empty
     }
 
 
@@ -102,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        tttGame = new TicTacToe( );
+        tttGame = new TicTacToe(2);
         buildGuiByCode( );
         gson = new Gson();
         updateTurnStatus();
@@ -218,9 +214,9 @@ public class MainActivity extends AppCompatActivity {
     public void update( int row, int col ) {
         int play = tttGame.play( row, col );
         if( play == 1 )
-            buttons[row][col].setText( "+" );
+            buttons[row][col].setText( "X" );
         else if( play == 2 )
-            buttons[row][col].setText( "-" );
+            buttons[row][col].setText( "O" );
         if( tttGame.isGameOver( ) ) {
             status.setBackgroundColor( Color.YELLOW );
             enableButtons( false );
@@ -228,6 +224,8 @@ public class MainActivity extends AppCompatActivity {
             showNewGameDialog( );	// offer to play again
         }
         updateTurnStatus();
+        requestMove(row, col);
+        sendMove(row, col);
     }
 
     public void enableButtons( boolean enabled ) {

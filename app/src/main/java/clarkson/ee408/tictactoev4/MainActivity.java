@@ -27,61 +27,58 @@ public class MainActivity extends AppCompatActivity {
     private Gson gson;
     private Handler moveRequestHandler;
     private boolean shouldRequestMove = false;
-    private static final long REQUEST_MOVE_INTERVAL = 1000;
+    private static final long REQUEST_MOVE_INTERVAL = 3000;
 
 
 
-    public void sendMove(int move, int col) {
+    public void sendMove(int move) {
         // Create a Request object with the type SEND_MOVE
-        Request request = new Request(Request.RequestType.SEND_MOVE);
+        Request request = new Request(Request.RequestType.SEND_MOVE, serializeMove(move));
 
-        // Serialize the move and set it as the data attribute of the request
-        String serializedMove = serializeMove(move);
-        request.setData(serializedMove);
 
         // Use the AppExecutors to send the request in the networkIO thread
-        AppExecutors.getInstance().networkIO().execute(new Runnable() {
-            @Override
-            public void run() {
-                // Send the request using the SocketClient
-                SocketClient socketClient = SocketClient.getInstance();
-                socketClient.send(request);
-
-            }
+        AppExecutors.getInstance().networkIO().execute(() -> {
+            // Send the request using the SocketClient
+            SocketClient socketClient = SocketClient.getInstance();
+            Response response = socketClient.sendRequest(request, Response.class);
+            AppExecutors.getInstance().mainThread().execute(() -> {
+                if(response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
+                    Log.e("SEND", "Move " + move + " Sent");
+                }else{
+                    Log.e("SEND", "Move " + move + " Not Sent");
+                }
+            });
         });
     }
 
     public String serializeMove(int move) {
-        return Integer.toString(move);
+        return gson.toJson(move);
     }
 
-    public void requestMove(final int row, final int col) {
+    public void requestMove() {
         // Create a Request object with the type REQUEST_MOVE
-        Request request = new Request(Request.RequestType.REQUEST_MOVE);
+        Request request = new Request(Request.RequestType.REQUEST_MOVE, null);
 
         // Use the AppExecutors to send the request in the networkIO thread
-        AppExecutors.getInstance().networkIO().execute(new Runnable() {
-            @Override
-            public void run() {
-                // Send the request using the SocketClient
-                SocketClient socketClient = SocketClient.getInstance();
-                socketClient.send(request);
-
-                // Receive the response (assuming it's a GamingResponse)
-                GamingResponse response = (GamingResponse) socketClient.receive();
-
-                if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
+        AppExecutors.getInstance().networkIO().execute(() -> {
+            // Send the request using the SocketClient
+            SocketClient socketClient = SocketClient.getInstance();
+            GamingResponse response = socketClient.sendRequest(request, GamingResponse.class);
+            AppExecutors.getInstance().mainThread().execute(() -> {
+                if (response != null && response.getStatus() == GamingResponse.ResponseStatus.SUCCESS) {
+                    int move = response.getMove();
+                    int row = move /3;
+                    int col = move % 3;
+                    Log.e("REQUEST", "Move " + move);
                     if (isValidMove(row, col)) {
                         // Update the board with the received move in the mainThread
-                        AppExecutors.getInstance().mainThread().execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                update(row, col);
-                            }
-                        });
+                        update(row, col);
                     }
+                } else {
+                    Log.e("REQUEST", "No Move");
                 }
-            }
+            });
+
         });
     }
 
@@ -104,30 +101,19 @@ public class MainActivity extends AppCompatActivity {
         updateTurnStatus();
         moveRequestHandler = new Handler();
 
-        // Start periodic requests if it's not the current player's turn
-        if (tttGame.getPlayer() != tttGame.getTurn()) {
-            shouldRequestMove = true;
-            startPeriodicMoveRequest();
-        }
+        startPeriodicMoveRequest();
     }
 
     private void startPeriodicMoveRequest() {
-        moveRequestHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (shouldRequestMove) {
-                    // Send the request for the other player's move to the server here
-                    // You can make a network call to request the move
-
-                    // After the request, set the flag to false if it's the current player's turn
-                    if (tttGame.getPlayer() == tttGame.getTurn()) {
-                        shouldRequestMove = false;
-                    }
-                }
-
-                // Schedule the next move request
-                startPeriodicMoveRequest();
+        moveRequestHandler.postDelayed(() -> {
+            if (shouldRequestMove) {
+                // Send the request for the other player's move to the server here
+                // You can make a network call to request the move
+                requestMove();
             }
+
+            // Schedule the next move request
+            startPeriodicMoveRequest();
         }, REQUEST_MOVE_INTERVAL);
     }
 
@@ -218,14 +204,14 @@ public class MainActivity extends AppCompatActivity {
         else if( play == 2 )
             buttons[row][col].setText( "O" );
         if( tttGame.isGameOver( ) ) {
+            shouldRequestMove = false;
             status.setBackgroundColor( Color.YELLOW );
             enableButtons( false );
             status.setText( tttGame.result( ) );
             showNewGameDialog( );	// offer to play again
+        }else {
+            updateTurnStatus();
         }
-        updateTurnStatus();
-        requestMove(row, col);
-        sendMove(row, col);
     }
 
     public void enableButtons( boolean enabled ) {
@@ -251,15 +237,6 @@ public class MainActivity extends AppCompatActivity {
         alert.setNegativeButton( "NO", playAgain );
         alert.show( );
 
-        if (tttGame.result().equals("Tie Game")) {
-            // If the game was a tie, switch the starting player
-            if (tttGame.getPlayer() == 1) {
-                tttGame.setPlayer(2);
-            } else {
-                tttGame.setPlayer(1);
-            }
-        }
-        updateTurnStatus();
     }
 
     private class ButtonHandler implements View.OnClickListener {
@@ -268,8 +245,11 @@ public class MainActivity extends AppCompatActivity {
 
             for( int row = 0; row < TicTacToe.SIDE; row ++ )
                 for( int column = 0; column < TicTacToe.SIDE; column++ )
-                    if( v == buttons[row][column] )
-                        update( row, column );
+                    if( v == buttons[row][column] ) {
+                        int move = (row*3)+column;
+                        sendMove(move);
+                        update(row, column);
+                    }
         }
     }
 
@@ -277,10 +257,17 @@ public class MainActivity extends AppCompatActivity {
         public void onClick( DialogInterface dialog, int id ) {
             if( id == -1 ) /* YES button */ {
                 tttGame.resetGame( );
+                // If the game was a tie, switch the starting player
+                if (tttGame.getPlayer() == 1) {
+                    tttGame.setPlayer(2);
+                } else {
+                    tttGame.setPlayer(1);
+                }
                 enableButtons( true );
                 resetButtons( );
                 status.setBackgroundColor( Color.YELLOW );
                 status.setText( tttGame.result( ) );
+                updateTurnStatus();
             }
             else if( id == -2 ) // NO button
                 MainActivity.this.finish( );

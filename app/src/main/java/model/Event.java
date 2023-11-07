@@ -8,7 +8,7 @@ public class Event {
 
     // Class Attributes
     private int eventId;
-    private String player;
+    private String sender;
     private String opponent;
     private EventStatus status;
     private String turn;
@@ -19,9 +19,9 @@ public class Event {
     }
 
     // Constructor with all attributes
-    public Event(int eventId, String player, String opponent, EventStatus status, String turn, int move) {
+    public Event(int eventId, String sender, String opponent, EventStatus status, String turn, int move) {
         this.eventId = eventId;
-        this.player = player;
+        this.sender = sender;
         this.opponent = opponent;
         this.status = status;
         this.turn = turn;
@@ -37,13 +37,6 @@ public class Event {
         this.eventId = eventId;
     }
 
-    public String getPlayer() {
-        return player;
-    }
-
-    public static void setPlayer(String player) {
-        player = player;
-    }
 
     public String getOpponent() {
         return opponent;
@@ -73,8 +66,16 @@ public class Event {
         return move;
     }
 
-    public static void setMove(int move) {
-        move = move;
+    public void setMove(int move) {
+        this.move = move;
+    }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public void setSender(String sender) {
+        this.sender = sender;
     }
 
     // Equals method overridden to compare events based on their event IDs

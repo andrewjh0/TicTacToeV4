@@ -22,10 +22,6 @@ public class TicTacToe {
     public void setPlayer(int player) {
         this.player = player;
     }
-    public TicTacToe( ) {
-        game = new int[SIDE][SIDE];
-        resetGame( );
-    }
 
     public int play( int row, int col ) {
         int currentTurn = turn;

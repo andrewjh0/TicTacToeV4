@@ -1,8 +1,6 @@
 package socket;
 
 public class Request {
-    public Request(RequestType requestMove) {
-    }
 
     // Enumeration for RequestType
     public enum RequestType {

@@ -32,7 +32,7 @@ public class RegisterActivity extends AppCompatActivity {
         //Getting Inputs
         Button registerButton = findViewById(R.id.buttonRegister);
         //Not needed since we are in registration
-       // Button loginButton = findViewById(R.id.buttonLogin);
+        Button loginButton = findViewById(R.id.buttonLogin);
         usernameField = findViewById(R.id.editTextUsername);
         passwordField = findViewById(R.id.editTextPassword);
         confirmPasswordField = findViewById(R.id.editTextConfirmPassword);
@@ -42,8 +42,10 @@ public class RegisterActivity extends AppCompatActivity {
         gson = new GsonBuilder().serializeNulls().create();
         //Adding Handlers
         //TODO: set an onclick listener to registerButton to call handleRegister()
+        registerButton.setOnClickListener(view -> handleRegister());
 
         //TODO: set an onclick listener to loginButton to call goBackLogin()
+        loginButton.setOnClickListener(view -> goBackLogin());
     }
 
     /**

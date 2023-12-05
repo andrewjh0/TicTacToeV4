@@ -216,7 +216,7 @@ public class PairingActivity extends AppCompatActivity {
             AppExecutors.getInstance().mainThread().execute(() -> {
                 if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
 
-                    beginGame(pairingEvent ,2);
+                    beginGame(invitation ,2); // changed pairing event to invitation because it is a event but not sure if that is correct
                 } else {
                     Toast.makeText(this, "Accepting the Invite Failed", Toast.LENGTH_SHORT).show();
                 }
@@ -282,8 +282,7 @@ public class PairingActivity extends AppCompatActivity {
         shouldUpdatePairing = false;
 
         // TODO: logout by calling close() function of SocketClient
-        SocketClient socketClient = new SocketClient();
-        socketClient.close();
+        SocketClient.getInstance().close();
 
     }
 

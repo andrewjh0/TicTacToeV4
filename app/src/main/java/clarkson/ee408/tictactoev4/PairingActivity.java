@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,9 +50,9 @@ public class PairingActivity extends AppCompatActivity {
         // TODO: setup Gson with null serialization option
         gson = new GsonBuilder().serializeNulls().create();
         //Setting the username text
-        TextView usernameText = findViewById(R.id.text_username);
-        // TODO: set the usernameText to the username passed from LoginActivity (i.e from Intent)
 
+        // TODO: set the usernameText to the username passed from LoginActivity (i.e from Intent)
+        TextView usernameText = findViewById(R.id.text_username);
         //Getting UI Elements
         noAvailableUsersText = findViewById(R.id.text_no_available_users);
         recyclerView = findViewById(R.id.recycler_view_available_users);
@@ -99,12 +100,28 @@ public class PairingActivity extends AppCompatActivity {
      */
     private void handlePairingUpdate(PairingResponse response) {
         // TODO: handle availableUsers by calling updateAvailableUsers()
-
+        updateAvailableUsers(response.getAvailableUsers());
         // TODO: handle invitationResponse. First by sending acknowledgement calling sendAcknowledgement()
-        // --TODO: If the invitationResponse is ACCEPTED, Toast an accept message and call beginGame
-        // --TODO: If the invitationResponse is DECLINED, Toast a decline message
+      Event invitationResponse = response.getInvitationResponse();
+      if(invitationResponse != null) {
+          sendAcknowledgement(invitationResponse);
 
-        // TODO: handle invitation by calling createRespondAlertDialog()
+
+          // --TODO: If the invitationResponse is ACCEPTED, Toast an accept message and call beginGame
+          if (invitationResponse.getStatus() == Event.EventStatus.ACCEPTED) {
+              Toast.makeText(this, "Invitation Accepted", Toast.LENGTH_SHORT).show();
+              beginGame(invitationResponse,1);// not sure if this is right just knew i needed parameters
+          }
+          // --TODO: If the invitationResponse is DECLINED, Toast a decline message
+          else if (invitationResponse.getStatus() == Event.EventStatus.DECLINED) {
+              Toast.makeText(this, "Invitation Declined", Toast.LENGTH_SHORT).show();
+          }
+          // TODO: handle invitation by calling createRespondAlertDialog()
+          Event invitation = response.getInvitation();
+          if(invitation != null){
+              createRespondAlertDialog(invitation);
+          }
+      }
     }
 
     /**
@@ -115,8 +132,12 @@ public class PairingActivity extends AppCompatActivity {
         adapter.setUsers(availableUsers);
         if (adapter.getItemCount() <= 0) {
             // TODO show noAvailableUsersText and hide recyclerView
+            noAvailableUsersText.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.Gone);
         } else {
             // TODO hide noAvailableUsersText and show recyclerView
+            noAvailableUsersText.setVisibility(View.Gone);
+            recyclerView.setVisibility(View.VISIBLE);
         }
     }
 

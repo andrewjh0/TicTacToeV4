@@ -53,8 +53,17 @@ public class RegisterActivity extends AppCompatActivity {
      */
     public void handleRegister() {
         // TODO: declare local variables for username, password, confirmPassword and displayName. Initialize their values with their corresponding EditText
+        String username = usernameField.toString();
+        String password = passwordField.toString();
+        String confirmPassword = confirmPasswordField.toString();
+        String displayName = displayNameField.toString();
 
         // TODO: verify that all fields are not empty before proceeding. Toast with the error message
+        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || displayName.isEmpty()) {
+            // Display a Toast with an error message
+            Toast.makeText(this, "All fields must be filled", Toast.LENGTH_SHORT).show();
+        }
+
 
         // TODO: verify that password is the same af confirm password. Toast with the error message
 

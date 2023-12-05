@@ -51,7 +51,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        User user = new User("hellooo", "passwords", "name", true);
+        User user = new User("hellooo", "password", "name", true);
         submitLogin(user);
     }
 
@@ -65,7 +65,6 @@ public class LoginActivity extends AppCompatActivity {
         if(Response.ResponseStatus.SUCCESS){
             gotoPairing(user.getUsername());
         }
-
         else {
             Toast.makeText(this, "Failed Login", Toast.LENGTH_SHORT).show();
         }

@@ -19,6 +19,7 @@ public class User {
         this.online = online;
     }
 
+
     // Getters and Setters for all attributes
     public String getUsername() {
         return username;

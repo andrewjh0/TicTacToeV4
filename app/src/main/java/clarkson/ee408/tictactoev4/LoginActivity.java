@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import clarkson.ee408.tictactoev4.client.AppExecutors;
+import clarkson.ee408.tictactoev4.client.SocketClient;
 import clarkson.ee408.tictactoev4.model.User;
 import clarkson.ee408.tictactoev4.socket.Request;
 import clarkson.ee408.tictactoev4.socket.Response;
@@ -61,14 +63,23 @@ public class LoginActivity extends AppCompatActivity {
      */
     public void submitLogin(User user) {
         // TODO: Send a LOGIN request, If SUCCESS response, call gotoPairing(), else, Toast the error message from sever
-        Request.RequestType.LOGIN();
-        if(Response.ResponseStatus.SUCCESS){
-            gotoPairing(user.getUsername());
-        }
-        else {
-            Toast.makeText(this, "Failed Login", Toast.LENGTH_SHORT).show();
-        }
+        Request request = new Request(Request.RequestType.LOGIN, null);
+
+        AppExecutors.getInstance().networkIO().execute(() -> {
+            // Send the request using the SocketClient
+            SocketClient socketClient = SocketClient.getInstance();
+            Response response = socketClient.sendRequest(request, Response.class);
+            AppExecutors.getInstance().mainThread().execute(() -> {
+                if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
+                    String username = usernameField.getText().toString();
+                    gotoPairing(username);
+                } else {
+                    Toast.makeText(this, "Login Failed", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
     }
+
 
     /**
      * Switch the page to {@link PairingActivity}

@@ -1,6 +1,7 @@
 package clarkson.ee408.tictactoev4;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -31,7 +32,6 @@ public class RegisterActivity extends AppCompatActivity {
 
         //Getting Inputs
         Button registerButton = findViewById(R.id.buttonRegister);
-        //Not needed since we are in registration
         Button loginButton = findViewById(R.id.buttonLogin);
         usernameField = findViewById(R.id.editTextUsername);
         passwordField = findViewById(R.id.editTextPassword);
@@ -65,24 +65,46 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
 
-        // TODO: verify that password is the same af confirm password. Toast with the error message
+        // TODO: verify that password is the same as confirm password. Toast with the error message
+        if (!password.equals(confirmPassword)){
+            Toast.makeText(this, "THE PASSWORDS ARE NOT THE SAME", Toast.LENGTH_SHORT).show();
+        }
 
         // TODO: Create User object with username, display name and password and call submitRegistration()
+        User newUser = new User(username, displayName, password, true);
+        submitRegistration(newUser);
     }
 
     /**
      * Sends REGISTER request to the server
      * @param user the User to register
      */
+
     void submitRegistration(User user) {
-        //TODO: Send a REGISTER request to the server, if SUCCESS reponse, call goBackLogin(). Else, Toast the error message
+        //TODO: Send a REGISTER request to the server, if SUCCESS response, call goBackLogin(). Else, Toast the error message
+        Request request = new Request(Request.RequestType.REGISTER, null);
+
+        AppExecutors.getInstance().networkIO().execute(() -> {
+            // Send the request using the SocketClient
+            SocketClient socketClient = SocketClient.getInstance();
+            Response response = socketClient.sendRequest(request, Response.class);
+            AppExecutors.getInstance().mainThread().execute(() -> {
+                if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
+                    goBackLogin();
+                } else {
+                    Toast.makeText(this, "Registration Failed", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
     }
+
 
     /**
      * Change the activity to LoginActivity
      */
     private void goBackLogin() {
         //TODO: Close this activity by calling finish(), it will automatically go back to its parent (i.e,. LoginActivity)
+        this.finish();
     }
 
 }

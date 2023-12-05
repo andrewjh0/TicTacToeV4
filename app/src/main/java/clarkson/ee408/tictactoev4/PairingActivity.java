@@ -133,10 +133,10 @@ public class PairingActivity extends AppCompatActivity {
         if (adapter.getItemCount() <= 0) {
             // TODO show noAvailableUsersText and hide recyclerView
             noAvailableUsersText.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.Gone);
+            recyclerView.setVisibility(View.GONE);
         } else {
             // TODO hide noAvailableUsersText and show recyclerView
-            noAvailableUsersText.setVisibility(View.Gone);
+            noAvailableUsersText.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
         }
     }

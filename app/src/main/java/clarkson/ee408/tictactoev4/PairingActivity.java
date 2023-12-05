@@ -1,5 +1,6 @@
 package clarkson.ee408.tictactoev4;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.util.List;
 
@@ -45,7 +47,7 @@ public class PairingActivity extends AppCompatActivity {
 
         Log.e(TAG, "App is now created");
         // TODO: setup Gson with null serialization option
-
+        gson = new GsonBuilder().serializeNulls().create();
         //Setting the username text
         TextView usernameText = findViewById(R.id.text_username);
         // TODO: set the usernameText to the username passed from LoginActivity (i.e from Intent)
@@ -74,7 +76,22 @@ public class PairingActivity extends AppCompatActivity {
      */
     private void getPairingUpdate() {
         // TODO:  Send an UPDATE_PAIRING request to the server. If SUCCESS call handlePairingUpdate(). Else, Toast the error
+        Request request = new Request(Request.RequestType.UPDATE_PAIRING, null);
+
+        AppExecutors.getInstance().networkIO().execute(() -> {
+            // Send the request using the SocketClient
+            SocketClient socketClient = SocketClient.getInstance();
+            Response response = socketClient.sendRequest(request, Response.class);
+            AppExecutors.getInstance().mainThread().execute(() -> {
+                if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
+                  handlePairingUpdate(PairingResponse);
+                } else {
+                    Toast.makeText(this, "Pairing Failed", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
     }
+
 
     /**
      * Handle the PairingResponse received form the server
@@ -146,7 +163,6 @@ public class PairingActivity extends AppCompatActivity {
             });
         });
     }
-    }
 
     /**
      * Create a dialog showing incoming invitation
@@ -154,6 +170,7 @@ public class PairingActivity extends AppCompatActivity {
      */
     private void createRespondAlertDialog(Event invitation) {
         // TODO: set shouldUpdatePairing to false
+        shouldUpdatePairing = false;
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setCancelable(false);
         builder.setTitle("Game Invitation");
@@ -169,7 +186,23 @@ public class PairingActivity extends AppCompatActivity {
      */
     private void acceptInvitation(Event invitation) {
         // TODO:  Send an ACCEPT_INVITATION request to the server. If SUCCESS beginGame() as player 2. Else, Toast the error
+        Request request = new Request(Request.RequestType.ACCEPT_INVITATION, null);
+
+        AppExecutors.getInstance().networkIO().execute(() -> {
+            // Send the request using the SocketClient
+            SocketClient socketClient = SocketClient.getInstance();
+            Response response = socketClient.sendRequest(request, Response.class);
+            AppExecutors.getInstance().mainThread().execute(() -> {
+                if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
+
+                    beginGame(pairingEvent ,2);
+                } else {
+                    Toast.makeText(this, "Accepting the Invite Failed", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
     }
+
 
     /**
      * Sends an DECLINE_INVITATION to the server
@@ -177,8 +210,23 @@ public class PairingActivity extends AppCompatActivity {
      */
     private void declineInvitation(Event invitation) {
         // TODO:  Send a DECLINE_INVITATION request to the server. If SUCCESS response, Toast a message, else, Toast the error
+        Request request = new Request(Request.RequestType.DECLINE_INVITATION, null);
+
+        AppExecutors.getInstance().networkIO().execute(() -> {
+            // Send the request using the SocketClient
+            SocketClient socketClient = SocketClient.getInstance();
+            Response response = socketClient.sendRequest(request, Response.class);
+            AppExecutors.getInstance().mainThread().execute(() -> {
+                if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
+                    Toast.makeText(this, "Invite Declined", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Declined Failed", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
 
         // TODO: set shouldUpdatePairing to true after DECLINE_INVITATION is sent.
+    shouldUpdatePairing = true;
 
     }
 
@@ -192,6 +240,9 @@ public class PairingActivity extends AppCompatActivity {
         shouldUpdatePairing = true;
 
         // TODO: start MainActivity and pass player as data
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("PLAYER", player);
+        startActivity(intent);
     }
 
     @Override
@@ -210,6 +261,8 @@ public class PairingActivity extends AppCompatActivity {
         shouldUpdatePairing = false;
 
         // TODO: logout by calling close() function of SocketClient
+        SocketClient socketClient = new SocketClient();
+        socketClient.close();
 
     }
 

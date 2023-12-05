@@ -1,6 +1,4 @@
-package model;
-
-import java.util.Objects;
+package clarkson.ee408.tictactoev4.model;
 
 public class User {
     // Class Attributes

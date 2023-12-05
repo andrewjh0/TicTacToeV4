@@ -1,4 +1,4 @@
-package model;
+package clarkson.ee408.tictactoev4.model;
 
 public class Event {
     // Enumeration for EventStatus

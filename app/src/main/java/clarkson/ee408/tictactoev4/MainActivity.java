@@ -13,11 +13,11 @@ import android.widget.GridLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import client.SocketClient;
-import socket.Request;
-import client.AppExecutors;
-import socket.GamingResponse;
-import socket.Response;
+import clarkson.ee408.tictactoev4.client.SocketClient;
+import clarkson.ee408.tictactoev4.socket.Request;
+import clarkson.ee408.tictactoev4.client.AppExecutors;
+import clarkson.ee408.tictactoev4.socket.GamingResponse;
+import clarkson.ee408.tictactoev4.socket.Response;
 import com.google.gson.Gson;
 
 public class MainActivity extends AppCompatActivity {
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        tttGame = new TicTacToe(2);
+        tttGame = new TicTacToe(1);
         buildGuiByCode( );
         gson = new Gson();
         updateTurnStatus();

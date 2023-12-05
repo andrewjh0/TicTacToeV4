@@ -1,22 +1,17 @@
-package client; // Replace with your actual package name
+package clarkson.ee408.tictactoev4.client; // Replace with your actual package name
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.logging.Level;
 
-import socket.Request;
-import socket.Response;
+import clarkson.ee408.tictactoev4.socket.Request;
 
 public class SocketClient {
-    private static final String SERVER_ADDRESS = "128.153.171.0"; // Replace with the server's IP address
+    private static final String SERVER_ADDRESS = "10.0.0.11"; // Replace with the server's IP address
     private static final int SERVER_PORT = 5000; // Replace with the server's port number
 
     private Socket socket;

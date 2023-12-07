@@ -66,9 +66,10 @@ public class RegisterActivity extends AppCompatActivity {
 
 
         // TODO: verify that password is the same as confirm password. Toast with the error message
-        if (!password.equals(confirmPassword)){
+       if (!password.equals(confirmPassword)){
             Toast.makeText(this, "THE PASSWORDS ARE NOT THE SAME", Toast.LENGTH_SHORT).show();
-        }
+       }
+
 
         // TODO: Create User object with username, display name and password and call submitRegistration()
         User newUser = new User(username, displayName, password, true);

@@ -1,5 +1,7 @@
 package clarkson.ee408.tictactoev4;
 
+
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -34,27 +36,53 @@ public class MainActivity extends AppCompatActivity {
     private SocketClient socketClient;
     private AppExecutors appExecutors;
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Stop the repetitive Handler
+        handler.removeCallbacks(refresh);
 
+        // Check if the game is over
+        if (tttGame.isGameOver()) {
+            // Call completeGame() if the game is over
+            completeGame();
+        } else {
+            // Call abortGame() if the game is not over
+            abortGame();
+        }
+    }
 
-    public void abortGame(final Context context) {
-        appExecutors.networkIO().execute(new Runnable() {
-            @Override
-            public void run() {
-                // Assume sendAbortGameRequest is a method in SocketClient
-               boolean success = socketClient.sendRequest(Request.RequestType.ABORT_GAME);
+    public void abortGame() {
+        appExecutors.networkIO().execute(() -> {
+            // Assume sendAbortGameRequest is a method in SocketClient
+            Request request = new Request(Request.RequestType.ABORT_GAME, null);
+            Response response = socketClient.sendRequest(request, Response.class);
 
-                // Display a toast based on the success of the request
-                appExecutors.mainThread().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (success) {
-                            Toast.makeText(context, "ABORT_GAME request sent successfully", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(context, "Failed to send ABORT_GAME request", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
+            // Display a toast based on the success of the request
+            appExecutors.mainThread().execute(() -> {
+                if(response.getStatus() == Response.ResponseStatus.SUCCESS) {
+                    Toast.makeText(this,"ABORT_GAME request sent successfully", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Failed to send ABORT_GAME request", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+    }
+
+    public void completeGame() {
+        appExecutors.networkIO().execute(() -> {
+            // Assume sendAbortGameRequest is a method in SocketClient
+            Request request = new Request(Request.RequestType.COMPLETE_GAME, null);
+            Response response = socketClient.sendRequest(request, Response.class);
+
+            // Display a toast based on the success of the request
+            appExecutors.mainThread().execute(() -> {
+                if(response.getStatus() == Response.ResponseStatus.SUCCESS) {
+                    Toast.makeText(this,"COMPLETE_GAME request sent successfully", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Failed to send COMPLETE_GAME request", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
     }
 
@@ -85,18 +113,7 @@ public class MainActivity extends AppCompatActivity {
     public void requestMove() {
         // Create a Request object with the type REQUEST_MOVE
         Request request = new Request(Request.RequestType.REQUEST_MOVE, null);
-        GamingResponse gamingResponse = new GamingResponse();
-        //add if clause to see if game is active
-        if (gamingResponse.isActive()== false){
-            enableButtons( false );
-            resetButtons( );
-            status.setBackgroundColor( Color.YELLOW );
-            status.setText("Response Message" );
-            shouldRequestMove = false;
-            updateTurnStatus();
-            tttGame = null;
 
-        }
 
         // Use the AppExecutors to send the request in the networkIO thread
         AppExecutors.getInstance().networkIO().execute(() -> {
@@ -104,7 +121,17 @@ public class MainActivity extends AppCompatActivity {
             SocketClient socketClient = SocketClient.getInstance();
             GamingResponse response = socketClient.sendRequest(request, GamingResponse.class);
             AppExecutors.getInstance().mainThread().execute(() -> {
-                if (response != null && response.getStatus() == GamingResponse.ResponseStatus.SUCCESS) {
+                if (response != null && response.isActive()== false){
+                    enableButtons( false );
+                    resetButtons( );
+                    status.setBackgroundColor( Color.YELLOW );
+                    status.setText(response.getMessage());
+                    shouldRequestMove = false;
+                    updateTurnStatus();
+                    tttGame = null;
+
+                }
+                else if (response != null && response.getStatus() == GamingResponse.ResponseStatus.SUCCESS) {
                     int move = response.getMove();
                     int row = move /3;
                     int col = move % 3;

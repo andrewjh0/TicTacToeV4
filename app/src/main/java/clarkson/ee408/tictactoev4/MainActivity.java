@@ -1,5 +1,6 @@
 package clarkson.ee408.tictactoev4;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -11,6 +12,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import clarkson.ee408.tictactoev4.client.SocketClient;
@@ -28,8 +31,32 @@ public class MainActivity extends AppCompatActivity {
     private Handler moveRequestHandler;
     private boolean shouldRequestMove = false;
     private static final long REQUEST_MOVE_INTERVAL = 3000;
+    private SocketClient socketClient;
+    private AppExecutors appExecutors;
 
 
+
+    public void abortGame(final Context context) {
+        appExecutors.networkIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Assume sendAbortGameRequest is a method in SocketClient
+                boolean success = socketClient.sendRequest(Request.RequestType.ABORT_GAME);
+
+                // Display a toast based on the success of the request
+                appExecutors.mainThread().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (success) {
+                            Toast.makeText(context, "ABORT_GAME request sent successfully", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(context, "Failed to send ABORT_GAME request", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+    }
 
     public void sendMove(int move) {
         // Create a Request object with the type SEND_MOVE
@@ -58,6 +85,18 @@ public class MainActivity extends AppCompatActivity {
     public void requestMove() {
         // Create a Request object with the type REQUEST_MOVE
         Request request = new Request(Request.RequestType.REQUEST_MOVE, null);
+        GamingResponse gamingResponse = new GamingResponse();
+        //add if clause to see if game is active
+        if (gamingResponse.isActive()== false){
+            enableButtons( false );
+            resetButtons( );
+            status.setBackgroundColor( Color.YELLOW );
+            status.setText("Response Message" );
+            shouldRequestMove = false;
+            updateTurnStatus();
+            tttGame = null;
+
+        }
 
         // Use the AppExecutors to send the request in the networkIO thread
         AppExecutors.getInstance().networkIO().execute(() -> {
@@ -94,10 +133,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate( savedInstanceState );
         setContentView(R.layout.activity_main);
 
-
-        tttGame = new TicTacToe(1);
-        buildGuiByCode( );
+        int playervalue = getIntent().getIntExtra("Player_Value", 1);
+        tttGame = new TicTacToe(playervalue);
+        buildGuiByCode();
         gson = new Gson();
+        shouldRequestMove = true;
         updateTurnStatus();
         moveRequestHandler = new Handler();
 
@@ -107,8 +147,6 @@ public class MainActivity extends AppCompatActivity {
     private void startPeriodicMoveRequest() {
         moveRequestHandler.postDelayed(() -> {
             if (shouldRequestMove) {
-                // Send the request for the other player's move to the server here
-                // You can make a network call to request the move
                 requestMove();
             }
 
@@ -122,12 +160,12 @@ public class MainActivity extends AppCompatActivity {
             // It's the current player's turn
             status.setText("Your Turn");
             enableButtons(true);// Enable buttons for the current player
-            shouldRequestMove = false;
+           // shouldRequestMove = false; task 9
         } else {
             // It's the opponent's turn
             status.setText("Waiting for Opponent");
             enableButtons(false); // Disable buttons for the opponent
-            shouldRequestMove = true;
+           // shouldRequestMove = true; task 9
         }
     }
 
@@ -257,6 +295,7 @@ public class MainActivity extends AppCompatActivity {
         public void onClick( DialogInterface dialog, int id ) {
             if( id == -1 ) /* YES button */ {
                 tttGame.resetGame( );
+                shouldRequestMove = true;
                 // If the game was a tie, switch the starting player
                 if (tttGame.getPlayer() == 1) {
                     tttGame.setPlayer(2);

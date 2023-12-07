@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 // Assume sendAbortGameRequest is a method in SocketClient
-                boolean success = socketClient.sendRequest(Request.RequestType.ABORT_GAME);
+               boolean success = socketClient.sendRequest(Request.RequestType.ABORT_GAME);
 
                 // Display a toast based on the success of the request
                 appExecutors.mainThread().execute(new Runnable() {

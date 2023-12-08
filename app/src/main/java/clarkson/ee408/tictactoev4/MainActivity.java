@@ -24,6 +24,7 @@ import clarkson.ee408.tictactoev4.client.AppExecutors;
 import clarkson.ee408.tictactoev4.socket.GamingResponse;
 import clarkson.ee408.tictactoev4.socket.Response;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class MainActivity extends AppCompatActivity {
     private TicTacToe tttGame;
@@ -31,35 +32,53 @@ public class MainActivity extends AppCompatActivity {
     private TextView status;
     private Gson gson;
     private Handler moveRequestHandler;
-    private boolean shouldRequestMove = false;
-    private static final long REQUEST_MOVE_INTERVAL = 3000;
-    private SocketClient socketClient;
-    private AppExecutors appExecutors;
+    private Runnable refresh;
+    private boolean shouldRequestMove;
+    private static final long REQUEST_MOVE_INTERVAL = 1000;
+
+
+    @Override
+    protected void onCreate( Bundle savedInstanceState ) {
+        super.onCreate( savedInstanceState );
+        setContentView(R.layout.activity_main);
+
+        int playervalue = getIntent().getIntExtra("PLAYER", 1);
+        tttGame = new TicTacToe(playervalue);
+        buildGuiByCode();
+        gson = new GsonBuilder().serializeNulls().create();
+        shouldRequestMove = true;
+        updateTurnStatus();
+        moveRequestHandler = new Handler();
+
+        startPeriodicMoveRequest();
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         // Stop the repetitive Handler
-        handler.removeCallbacks(refresh);
+        moveRequestHandler.removeCallbacks(refresh);
 
         // Check if the game is over
-        if (tttGame.isGameOver()) {
-            // Call completeGame() if the game is over
-            completeGame();
-        } else {
-            // Call abortGame() if the game is not over
-            abortGame();
+        if(tttGame != null) {
+            if (tttGame.isGameOver()) {
+                // Call completeGame() if the game is over
+                completeGame();
+            } else {
+                // Call abortGame() if the game is not over
+                abortGame();
+            }
         }
     }
 
     public void abortGame() {
-        appExecutors.networkIO().execute(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             // Assume sendAbortGameRequest is a method in SocketClient
             Request request = new Request(Request.RequestType.ABORT_GAME, null);
-            Response response = socketClient.sendRequest(request, Response.class);
+            Response response = SocketClient.getInstance().sendRequest(request, Response.class);
 
             // Display a toast based on the success of the request
-            appExecutors.mainThread().execute(() -> {
+            AppExecutors.getInstance().mainThread().execute(() -> {
                 if(response.getStatus() == Response.ResponseStatus.SUCCESS) {
                     Toast.makeText(this,"ABORT_GAME request sent successfully", Toast.LENGTH_SHORT).show();
                 } else {
@@ -70,13 +89,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void completeGame() {
-        appExecutors.networkIO().execute(() -> {
+        AppExecutors.getInstance().networkIO().execute(() -> {
             // Assume sendAbortGameRequest is a method in SocketClient
             Request request = new Request(Request.RequestType.COMPLETE_GAME, null);
-            Response response = socketClient.sendRequest(request, Response.class);
+            Response response = SocketClient.getInstance().sendRequest(request, Response.class);
 
             // Display a toast based on the success of the request
-            appExecutors.mainThread().execute(() -> {
+            AppExecutors.getInstance().mainThread().execute(() -> {
                 if(response.getStatus() == Response.ResponseStatus.SUCCESS) {
                     Toast.makeText(this,"COMPLETE_GAME request sent successfully", Toast.LENGTH_SHORT).show();
                 } else {
@@ -121,15 +140,12 @@ public class MainActivity extends AppCompatActivity {
             SocketClient socketClient = SocketClient.getInstance();
             GamingResponse response = socketClient.sendRequest(request, GamingResponse.class);
             AppExecutors.getInstance().mainThread().execute(() -> {
-                if (response != null && response.isActive()== false){
+                if (response != null && !response.isActive()){
+                    shouldRequestMove = false;
                     enableButtons( false );
-                    resetButtons( );
                     status.setBackgroundColor( Color.YELLOW );
                     status.setText(response.getMessage());
-                    shouldRequestMove = false;
-                    updateTurnStatus();
                     tttGame = null;
-
                 }
                 else if (response != null && response.getStatus() == GamingResponse.ResponseStatus.SUCCESS) {
                     int move = response.getMove();
@@ -155,31 +171,17 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    @Override
-    protected void onCreate( Bundle savedInstanceState ) {
-        super.onCreate( savedInstanceState );
-        setContentView(R.layout.activity_main);
-
-        int playervalue = getIntent().getIntExtra("Player_Value", 1);
-        tttGame = new TicTacToe(playervalue);
-        buildGuiByCode();
-        gson = new Gson();
-        shouldRequestMove = true;
-        updateTurnStatus();
-        moveRequestHandler = new Handler();
-
-        startPeriodicMoveRequest();
-    }
-
     private void startPeriodicMoveRequest() {
-        moveRequestHandler.postDelayed(() -> {
+        refresh = () -> {
             if (shouldRequestMove) {
                 requestMove();
             }
 
             // Schedule the next move request
-            startPeriodicMoveRequest();
-        }, REQUEST_MOVE_INTERVAL);
+            moveRequestHandler.postDelayed(refresh, REQUEST_MOVE_INTERVAL);
+        };
+
+        moveRequestHandler.postDelayed(refresh, REQUEST_MOVE_INTERVAL);
     }
 
     private void updateTurnStatus() {
@@ -322,7 +324,6 @@ public class MainActivity extends AppCompatActivity {
         public void onClick( DialogInterface dialog, int id ) {
             if( id == -1 ) /* YES button */ {
                 tttGame.resetGame( );
-                shouldRequestMove = true;
                 // If the game was a tie, switch the starting player
                 if (tttGame.getPlayer() == 1) {
                     tttGame.setPlayer(2);
@@ -334,6 +335,7 @@ public class MainActivity extends AppCompatActivity {
                 status.setBackgroundColor( Color.YELLOW );
                 status.setText( tttGame.result( ) );
                 updateTurnStatus();
+                shouldRequestMove = true;
             }
             else if( id == -2 ) // NO button
                 MainActivity.this.finish( );

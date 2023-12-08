@@ -52,6 +52,8 @@ public class PairingActivity extends AppCompatActivity {
         //Setting the username text
         TextView usernameText = findViewById(R.id.text_username);
         // TODO: set the usernameText to the username passed from LoginActivity (i.e from Intent)
+        String username = getIntent().getStringExtra("USERNAME");
+        usernameText.setText(username);
 
         //Getting UI Elements
         noAvailableUsersText = findViewById(R.id.text_no_available_users);
@@ -67,6 +69,9 @@ public class PairingActivity extends AppCompatActivity {
         handler = new Handler();
         refresh = () -> {
             // TODO: call getPairingUpdate if shouldUpdatePairing is true
+            if(shouldUpdatePairing == true){
+                getPairingUpdate();
+            }
             handler.postDelayed(refresh, 1000);
         };
         handler.post(refresh);
@@ -116,11 +121,11 @@ public class PairingActivity extends AppCompatActivity {
             else if (invitationResponse.getStatus() == Event.EventStatus.DECLINED) {
                 Toast.makeText(this, "Invitation Declined", Toast.LENGTH_SHORT).show();
             }
-            // TODO: handle invitation by calling createRespondAlertDialog()
-            Event invitation = response.getInvitation();
-            if(invitation != null){
-                createRespondAlertDialog(invitation);
-            }
+        }
+        // TODO: handle invitation by calling createRespondAlertDialog()
+        Event invitation = response.getInvitation();
+        if(invitation != null){
+            createRespondAlertDialog(invitation);
         }
 
     }
@@ -148,7 +153,7 @@ public class PairingActivity extends AppCompatActivity {
      */
     private void sendGameInvitation(User userOpponent) {
         // TODO:  Send an SEND_INVITATION request to the server. If SUCCESS Toast a success message. Else, Toast the error
-        Request request = new Request(Request.RequestType.SEND_INVITATION, null);
+        Request request = new Request(Request.RequestType.SEND_INVITATION, gson.toJson(userOpponent.getUsername()));
 
         AppExecutors.getInstance().networkIO().execute(() -> {
             // Send the request using the SocketClient
@@ -170,7 +175,7 @@ public class PairingActivity extends AppCompatActivity {
       */
     private void sendAcknowledgement(Event invitationResponse) {
         // TODO:  Send an ACKNOWLEDGE_RESPONSE request to the server.
-        Request request = new Request(Request.RequestType.ACKNOWLEDGE_RESPONSE, null);
+        Request request = new Request(Request.RequestType.ACKNOWLEDGE_RESPONSE, gson.toJson(invitationResponse.getEventId()));
 
         AppExecutors.getInstance().networkIO().execute(() -> {
             // Send the request using the SocketClient
@@ -208,7 +213,7 @@ public class PairingActivity extends AppCompatActivity {
      */
     private void acceptInvitation(Event invitation) {
         // TODO:  Send an ACCEPT_INVITATION request to the server. If SUCCESS beginGame() as player 2. Else, Toast the error
-        Request request = new Request(Request.RequestType.ACCEPT_INVITATION, null);
+        Request request = new Request(Request.RequestType.ACCEPT_INVITATION, gson.toJson(invitation.getEventId()));
 
         AppExecutors.getInstance().networkIO().execute(() -> {
             // Send the request using the SocketClient
@@ -231,7 +236,7 @@ public class PairingActivity extends AppCompatActivity {
      */
     private void declineInvitation(Event invitation) {
         // TODO:  Send a DECLINE_INVITATION request to the server. If SUCCESS response, Toast a message, else, Toast the error
-        Request request = new Request(Request.RequestType.DECLINE_INVITATION, null);
+        Request request = new Request(Request.RequestType.DECLINE_INVITATION, gson.toJson(invitation.getEventId()));
 
         AppExecutors.getInstance().networkIO().execute(() -> {
             // Send the request using the SocketClient
@@ -258,7 +263,7 @@ public class PairingActivity extends AppCompatActivity {
      */
     private void beginGame(Event pairing, int player) {
         // TODO: set shouldUpdatePairing to false
-        shouldUpdatePairing = true;
+        shouldUpdatePairing = false;
 
         // TODO: start MainActivity and pass player as data
         Intent intent = new Intent(this, MainActivity.class);

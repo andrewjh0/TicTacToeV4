@@ -53,26 +53,28 @@ public class RegisterActivity extends AppCompatActivity {
      */
     public void handleRegister() {
         // TODO: declare local variables for username, password, confirmPassword and displayName. Initialize their values with their corresponding EditText
-        String username = usernameField.toString();
-        String password = passwordField.toString();
-        String confirmPassword = confirmPasswordField.toString();
-        String displayName = displayNameField.toString();
+        String username = usernameField.getText().toString();
+        String password = passwordField.getText().toString();
+        String confirmPassword = confirmPasswordField.getText().toString();
+        String displayName = displayNameField.getText().toString();
 
         // TODO: verify that all fields are not empty before proceeding. Toast with the error message
         if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || displayName.isEmpty()) {
             // Display a Toast with an error message
             Toast.makeText(this, "All fields must be filled", Toast.LENGTH_SHORT).show();
+            return;
         }
 
 
         // TODO: verify that password is the same as confirm password. Toast with the error message
        if (!password.equals(confirmPassword)){
             Toast.makeText(this, "THE PASSWORDS ARE NOT THE SAME", Toast.LENGTH_SHORT).show();
+            return;
        }
 
 
         // TODO: Create User object with username, display name and password and call submitRegistration()
-        User newUser = new User(username, displayName, password, true);
+        User newUser = new User(username, password,displayName, false);
         submitRegistration(newUser);
     }
 
@@ -83,7 +85,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     void submitRegistration(User user) {
         //TODO: Send a REGISTER request to the server, if SUCCESS response, call goBackLogin(). Else, Toast the error message
-        Request request = new Request(Request.RequestType.REGISTER, null);
+        Request request = new Request(Request.RequestType.REGISTER, gson.toJson(user));
 
         AppExecutors.getInstance().networkIO().execute(() -> {
             // Send the request using the SocketClient
@@ -91,6 +93,7 @@ public class RegisterActivity extends AppCompatActivity {
             Response response = socketClient.sendRequest(request, Response.class);
             AppExecutors.getInstance().mainThread().execute(() -> {
                 if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
+                    Toast.makeText(this, response.getMessage(), Toast.LENGTH_SHORT).show();
                     goBackLogin();
                 } else {
                     Toast.makeText(this, "Registration Failed", Toast.LENGTH_SHORT).show();

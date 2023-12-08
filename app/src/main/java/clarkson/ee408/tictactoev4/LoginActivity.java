@@ -53,7 +53,10 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        User user = new User("hellooo", "password", "name", true);
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+
         submitLogin(user);
     }
 
@@ -63,7 +66,7 @@ public class LoginActivity extends AppCompatActivity {
      */
     public void submitLogin(User user) {
         // TODO: Send a LOGIN request, If SUCCESS response, call gotoPairing(), else, Toast the error message from sever
-        Request request = new Request(Request.RequestType.LOGIN, null);
+        Request request = new Request(Request.RequestType.LOGIN, gson.toJson(user));
 
         AppExecutors.getInstance().networkIO().execute(() -> {
             // Send the request using the SocketClient
@@ -71,8 +74,7 @@ public class LoginActivity extends AppCompatActivity {
             Response response = socketClient.sendRequest(request, Response.class);
             AppExecutors.getInstance().mainThread().execute(() -> {
                 if (response != null && response.getStatus() == Response.ResponseStatus.SUCCESS) {
-                    String username = usernameField.getText().toString();
-                    gotoPairing(username);
+                    gotoPairing(user.getUsername());
                 } else {
                     Toast.makeText(this, "Login Failed", Toast.LENGTH_SHORT).show();
                 }

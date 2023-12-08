@@ -11,7 +11,7 @@ import java.net.Socket;
 import clarkson.ee408.tictactoev4.socket.Request;
 
 public class SocketClient {
-    private static final String SERVER_ADDRESS = "10.0.0.11"; // Replace with the server's IP address
+    private static final String SERVER_ADDRESS = "128.153.162.200"; // Replace with the server's IP address
     private static final int SERVER_PORT = 5000; // Replace with the server's port number
 
     private Socket socket;
